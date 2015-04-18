@@ -3,9 +3,12 @@
 #ifndef FEED_FORWARD_NET_H
 #define FEED_FORWARD_NET_H
 
-template<typename T>
+#include "deep_learning/neural_networks/parameters.h"
+
+template<typename T, typename _InputSize, typename... LayersInfo>
 struct FeedForwardNet {
   using DataType = T;
+  using Parameters = _Parameters<T, _InputSize, LayersInfo...>;
 };
 
 #endif

@@ -4,6 +4,7 @@
 #define NEURAL_NETWORKS
 
 #include "deep_learning/neural_networks/feed_forward_net.h"
+#include "deep_learning/neural_networks/layers/fully_connected.h"
 
 #endif
 
