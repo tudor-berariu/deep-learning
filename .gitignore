@@ -27,5 +27,10 @@
 *.out
 *.app
 
+# Vim files
+*.swp
+*.swo
+.ycm_extra_conf.py*
+
 # Executables are added automatically from Makefile under this line
 feed_forward_test
