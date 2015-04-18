@@ -36,7 +36,7 @@ struct FullyConnected {
   }
 
   template<typename T, typename InputSize>
-  using Parameters = std::array<T, parameters_array_size<InputSize>()>;
+  using Parameters = std::array<T, (InputSize::length + 1) * length>;
 
  private:
 
@@ -121,9 +121,9 @@ struct FullyConnected {
             Hidden<T, InputSize, batch_size>& hidden,
             Outputs<T, InputSize, batch_size>& outputs) {
       const _Biases<T, InputSize>& biases =
-        *reinterpret_cast<_Biases<T, InputSize>*>(parameters.data());
+        *reinterpret_cast<const _Biases<T, InputSize>*>(parameters.data());
       const _Weights<T, InputSize>& weights =
-        *reinterpret_cast<_Weights<T, InputSize>*>(&(parameters[length]));
+        *reinterpret_cast<const _Weights<T, InputSize>*>(&(parameters[length]));
 
       for (size_t n = 0; n < batch_size; n++) {
         for (size_t j = 0; j < length; j++) {

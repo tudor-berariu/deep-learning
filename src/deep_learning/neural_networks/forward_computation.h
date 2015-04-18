@@ -5,18 +5,38 @@
 
 #include <cstddef>
 #include <array>
+#include <type_traits>
 
 #include "deep_learning/neural_networks/parameters.h"
 
-template<typename T, size_t batch_size, typename ErrorFunction,
+template<typename T, size_t batch_size,
+         typename ErrorFunction, bool computes,
          typename InputSize, typename... OtherLayers>
 struct _ForwardComputation;
 
 template<typename T, size_t batch_size, typename ErrorFunction,
-         typename OutputSize>
-struct _ForwardComputation<T, batch_size, ErrorFunction, Size> {
+         typename LastSize>
+struct _ForwardComputation<T, batch_size, ErrorFunction, false, LastSize> {
 
-  using NetOutputs = std::array<std::array<T, InputSize::length>, batch_size>;
+  using NetOutputs = std::array<std::array<T, LastSize::length>, batch_size>;
+  const NetOutputs* y;
+
+  const NetOutputs&
+  forward(const NetOutputs& outputs, bool parameters) {
+    y = &outputs;
+    return outputs;
+  }
+
+  T error(const NetOutputs& labels) {
+    return ErrorFunction::template error<LastSize, batch_size>(*y, labels);
+  }
+};
+
+template<typename T, size_t batch_size, typename ErrorFunction,
+         typename LastSize>
+struct _ForwardComputation<T, batch_size, ErrorFunction, true, LastSize> {
+
+  using NetOutputs = std::array<std::array<T, LastSize::length>, batch_size>;
   NetOutputs y;
 
   const NetOutputs&
@@ -26,13 +46,13 @@ struct _ForwardComputation<T, batch_size, ErrorFunction, Size> {
   }
 
   T error(const NetOutputs& labels) {
-    return ErrorFunction::error(y, labels);
+    return ErrorFunction::template error<LastSize, batch_size>(y, labels);
   }
 };
 
-template<typename T, size_t batch_size, typename ErrorFunction,
+template<typename T, size_t batch_size, typename ErrorFunction, bool computes,
          typename InputSize, typename CrtLayer, typename... Others>
-struct _ForwardComputation<T, batch_size, ErrorFunction,
+struct _ForwardComputation<T, batch_size, ErrorFunction, computes,
                            InputSize, CrtLayer, Others...> {
 
   using Inputs =
@@ -44,7 +64,8 @@ struct _ForwardComputation<T, batch_size, ErrorFunction,
 
   using OutputSize = typename CrtLayer::template OutputSize<InputSize>;
   using NextComputation =
-    _ForwardComputation<T, batch_size, ErrorFunction, OutputSize, Others...>;
+    _ForwardComputation<T, batch_size, ErrorFunction, computes,
+                        OutputSize, Others...>;
 
   using NetOutputs = typename NextComputation::NetOutputs;
   using Parameters = _Parameters<T, InputSize, CrtLayer, Others...>;
@@ -58,11 +79,11 @@ struct _ForwardComputation<T, batch_size, ErrorFunction,
     CrtLayer::template
       forward<T, InputSize, batch_size, false>(inputs, parameters.values,
                                                hidden, outputs);
-    return NextComputation::forward(outputs, parameters.next);
+    return next.forward(outputs, parameters.next);
   }
 
   T error(const NetOutputs& labels) {
-    return NextComputation::error(labels);
+    return next.error(labels);
   }
 };
 
