@@ -9,7 +9,7 @@
 
 #include "deep_learning/size.h"
 
-template<size_t length>
+template<size_t length, template <typename> class TransferFunction>
 struct FullyConnected {
 
   /* -------------------- OutputSize -------------------- */
@@ -78,6 +78,64 @@ struct FullyConnected {
     for (size_t i = 0; i < parameters_array_size<InputSize>(); i++)
       parameters[i] = next_parameter(e);
   }
+
+
+  /* -------------------- Inputs, Hidden, and Outputs -------------------- */
+ public:
+
+  template<typename T, typename InputSize>
+  using Input = std::array<T, InputSize::length>;
+
+  template<typename T, typename InputSize, size_t batch_size>
+  using Inputs = std::array<Input<T, InputSize>, batch_size>;
+
+  template<typename T, typename InputSize>
+  using Output = std::array<T, OutputSize<InputSize>::length>;
+
+  template<typename T, typename InputSize, size_t batch_size>
+  using Outputs = std::array<Output<T, InputSize>, batch_size>;
+
+  template<typename T, typename InputSize, size_t batch_size>
+  using Hidden = Outputs<T, OutputSize<InputSize>, batch_size>;
+
+  /* -------------------- Forward phase -------------------- */
+
+  template<typename T, typename InputSize, size_t batch_size, bool train>
+  struct _Forward;
+
+  template<typename T, typename InputSize, size_t batch_size, bool train>
+  inline static void
+  forward(const Inputs<T, InputSize, batch_size>& inputs,
+          const Parameters<T, InputSize>& parameters,
+          Hidden<T, InputSize, batch_size>& hidden,
+          Outputs<T, InputSize, batch_size>& outputs) {
+    _Forward<T, InputSize, batch_size, train>::
+      forward(inputs, parameters, hidden, outputs);
+  }
+
+  template<typename T, typename InputSize, size_t batch_size, bool train>
+  struct _Forward {
+    inline static void
+    forward(const Inputs<T, InputSize, batch_size>& inputs,
+            const Parameters<T, InputSize>& parameters,
+            Hidden<T, InputSize, batch_size>& hidden,
+            Outputs<T, InputSize, batch_size>& outputs) {
+      const _Biases<T, InputSize>& biases =
+        *reinterpret_cast<_Biases<T, InputSize>*>(parameters.data());
+      const _Weights<T, InputSize>& weights =
+        *reinterpret_cast<_Weights<T, InputSize>*>(&(parameters[length]));
+
+      for (size_t n = 0; n < batch_size; n++) {
+        for (size_t j = 0; j < length; j++) {
+          hidden[n][j] = biases[j];
+          for (size_t i = 0; i < InputSize::length; i++)
+            hidden[n][j] += inputs[n][i] * weights[j][i];
+          outputs[n][j] = TransferFunction<T>::f(hidden[n][j]);
+        }
+      }
+   }
+  };
+
 };
 
 #endif
