@@ -4,11 +4,39 @@
 #define FEED_FORWARD_NET_H
 
 #include "deep_learning/neural_networks/parameters.h"
+#include "deep_learning/neural_networks/forward_computation.h"
+
+template<typename... info>
+struct NetOutput;
 
 template<typename T, typename _InputSize, typename... LayersInfo>
 struct FeedForwardNet {
   using DataType = T;
   using Parameters = _Parameters<T, _InputSize, LayersInfo...>;
+
+  using InputSize = _InputSize;
+  using OutputSize = typename NetOutput<InputSize, LayersInfo...>::OutputSize;
+
+  template <size_t batch_size, template<typename> class ErrorFunction>
+  using ForwardComputation =
+    _ForwardComputation<T, batch_size, ErrorFunction<T>,
+                        InputSize, LayersInfo...>;
+
+};
+
+/* Tudor:
+ * Extract size info from last layer
+ */
+
+template <typename InputSize, typename LastLayer>
+struct NetOutput<InputSize, LastLayer> {
+  using OutputSize = typename LastLayer::template OutputSize<InputSize>;
+};
+
+template <typename InputSize, typename CrtLayer, typename... OtherLayers>
+struct NetOutput<InputSize, CrtLayer, OtherLayers...> {
+  using CrtSize = typename CrtLayer::template OutputSize<InputSize>;
+  using OutputSize = typename NetOutput<CrtSize, OtherLayers...>::OutputSize;
 };
 
 #endif
