@@ -23,7 +23,7 @@
 SHELL := /bin/sh
 
 # compile options
-CC := gcc
+CC := clang #cc
 CCFLAGS := -Wall -std=c++0x
 LIBS :=
 LIBSTD := -lstdc++
@@ -76,12 +76,14 @@ $(EXEC): %: $(BUILD_DIR)/%.o $(AUX_OBJS)
 # Build object files from sources
 $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc $(HEADERS)
 	mkdir -p $(patsubst %/$(lastword $(subst /, ,$@)),%,$@)
-	$(CC) $(CCFLAGS) -c $(word 1,$+) -o $@ $(LIB)
+	$(CC) $(CCFLAGS) -c $(word 1,$+) -o $@
 
 # Remove all Emacs temporary files, objects and executable
 clean:
 	rm -rf $(EXEC) $(BUILD_DIR)/*
 	find . -name '*~' -print0 | xargs -0 rm -f
+	find . -name '*.swp' -print0 | xargs -0 rm -f
+	find . -name '*.swp' -print0 | xargs -0 rm -f
 
 # Run one executable
 run: build
