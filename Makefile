@@ -76,7 +76,7 @@ $(EXEC): %: $(BUILD_DIR)/%.o $(AUX_OBJS)
 # Build object files from sources
 $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc $(HEADERS)
 	mkdir -p $(patsubst %/$(lastword $(subst /, ,$@)),%,$@)
-	$(CC) $(CCFLAGS) -c $(word 1,$+) -o $@
+	$(CC) $(CCFLAGS) -I$(SRC_DIR) -c $(word 1,$+) -o $@
 
 # Remove all Emacs temporary files, objects and executable
 clean:
