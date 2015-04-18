@@ -26,3 +26,6 @@
 *.exe
 *.out
 *.app
+
+# Executables are added automatically from Makefile under this line
+feed_forward_test
