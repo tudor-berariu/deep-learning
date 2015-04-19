@@ -9,6 +9,7 @@
 
 #include "deep_learning/neural_networks/transfer_functions/logistic.h"
 #include "deep_learning/neural_networks/transfer_functions/tanh.h"
+#include "deep_learning/neural_networks/transfer_functions/relu.h"
 #include "deep_learning/neural_networks/transfer_functions/identity.h"
 
 #include "deep_learning/neural_networks/error_functions/rmse.h"
