@@ -25,7 +25,7 @@ SHELL := /bin/sh
 # compile options
 CC := clang #cc
 CCFLAGS := -Wall -std=c++0x
-LIBS :=
+LIBS := -lm
 LIBSTD := -lstdc++
 LIBMMGTK := #`pkg-config gtkmm-3.0 --cflags --libs`
 LIBBLAS := #`pkg-config atlas --cflags --libs`
