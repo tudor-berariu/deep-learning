@@ -52,28 +52,11 @@ struct FullyConnected {
 
   template<typename T, typename InputSize>
   inline static void
-  init_parameters(Parameters<T, InputSize>& parameters, T value) {
-    for (size_t i = 0; i < parameters_array_size<InputSize>(); i++)
-      parameters[i] = value;
-  }
-
-  template<typename T, typename InputSize>
-  inline static void
-  init_parameters(Parameters<T, InputSize>& parameters, T min, T max) {
-    std::random_device rd { };
-    std::default_random_engine e {rd()};
-    std::uniform_real_distribution<T> next_parameter(min, max);
-    for (size_t i = 0; i < parameters_array_size<InputSize>(); i++)
-      parameters[i] = next_parameter(e);
-  }
-
-  template<typename T, typename InputSize>
-  inline static void
   init_parameters(Parameters<T, InputSize>& parameters) {
     std::random_device rd { };
     std::default_random_engine e {rd()};
-    constexpr T mean = (T)1 / (T)length;
-    std::normal_distribution<T> next_parameter(mean, 1.0);
+    // constexpr T mean = (T)1 / (T)length;
+    std::normal_distribution<T> next_parameter(0.0, 0.1);
 
     for (size_t i = 0; i < parameters_array_size<InputSize>(); i++)
       parameters[i] = next_parameter(e);
@@ -161,7 +144,7 @@ struct FullyConnected {
     backpropagate(const Inputs<T, InputSize, batch_size>& inputs,
                   const Parameters<T, InputSize>& parameters,
                   const Hidden<T, InputSize, batch_size>& hidden,
-                  const Outputs<T, InputSize, batch_size>& outputs,
+                  const Outputs<T, InputSize, batch_size>&,
                   Outputs<T, InputSize, batch_size>& errors,
                   Parameters<T, InputSize>& gradients,
                   Inputs<T, InputSize, batch_size>& prev_errors) {
