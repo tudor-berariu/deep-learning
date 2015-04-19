@@ -103,20 +103,31 @@ struct FullyConnected {
             const Parameters<T, InputSize>& parameters,
             Hidden<T, InputSize, batch_size>& hidden,
             Outputs<T, InputSize, batch_size>& outputs) {
-      const _Biases<T, InputSize>& biases =
-        *reinterpret_cast<const _Biases<T, InputSize>*>(parameters.data());
-      const _Weights<T, InputSize>& weights =
-        *reinterpret_cast<const _Weights<T, InputSize>*>(&(parameters[length]));
+
+      const _Biases<T, InputSize>* const biases =
+        reinterpret_cast<const _Biases<T, InputSize>*>(parameters.data());
+      const _Weights<T, InputSize>* const weights =
+        reinterpret_cast<const _Weights<T, InputSize>*>(&(parameters[length]));
 
       for (size_t n = 0; n < batch_size; n++) {
+        const Input<T, InputSize>* const inputRow =
+          reinterpret_cast<const Input<T, InputSize>*>(inputs[n].data());
+        Output<T, InputSize>* const hiddenRow =
+          reinterpret_cast<Output<T, InputSize>*>(hidden[n].data());
+        Output<T, InputSize>* const outputRow =
+          reinterpret_cast<Output<T, InputSize>*>(outputs[n].data());
         for (size_t j = 0; j < length; j++) {
-          hidden[n][j] = biases[j];
-          for (size_t i = 0; i < InputSize::length; i++)
-            hidden[n][j] += inputs[n][i] * weights[j][i];
-          outputs[n][j] = TransferFunction<T>::f(hidden[n][j]);
+          const std::array<T, InputSize::length>* const weightsRow =
+            reinterpret_cast<const std::array<T, InputSize::length>*>((*weights)[j].data());
+
+          (*hiddenRow)[j] = (*biases)[j];
+          for (size_t i = 0; i < InputSize::length; i++) {
+            (*hiddenRow)[j] += (*inputRow)[i] * (*weightsRow)[i];
+          }
+          (*outputRow)[j] = TransferFunction<T>::f((*hiddenRow)[j]);
         }
       }
-   }
+    }
   };
 
   /* -------------------- Backpropagation phase -------------------- */

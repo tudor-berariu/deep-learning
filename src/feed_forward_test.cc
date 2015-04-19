@@ -49,7 +49,7 @@ void test_performance() {
     fc->forward(*x, *p);
     double err = fc->error(*t);
     std::chrono::steady_clock::time_point b = std::chrono::steady_clock::now();
-    double err2 = gc->computeGradient(*x, *p, *t, *g);
+    double err2 = 0; //gc->computeGradient(*x, *p, *t, *g);
     std::chrono::steady_clock::time_point c = std::chrono::steady_clock::now();
 
     std::chrono::duration<double> fw_span =
@@ -77,8 +77,8 @@ int main() {
                             Size<10>,
                             FullyConnected<1000, Logistic>,
                             FullyConnected<1000, ReLU>,
-                            FullyConnected<200, HyperbolicTangent>,
-                            FullyConnected<10, Identity>>;
+                            FullyConnected<2000, HyperbolicTangent>,
+                            FullyConnected<100, Identity>>;
   test_performance<300, NN>();
   return 0;
 }
