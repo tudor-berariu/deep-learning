@@ -5,6 +5,7 @@
 
 #include "deep_learning/neural_networks/parameters.h"
 #include "deep_learning/neural_networks/forward_computation.h"
+#include "deep_learning/neural_networks/gradient_computation.h"
 
 template<typename... info>
 struct NetOutput;
@@ -22,6 +23,12 @@ struct FeedForwardNet {
     _ForwardComputation<T, batch_size, ErrorFunction<T>,
                         ErrorFunction<T>::transforms_last_layer,
                         InputSize, LayersInfo...>;
+
+  template <size_t batch_size, template<typename> class ErrorFunction>
+  using GradientComputation =
+    _GradientComputation<T, batch_size, ErrorFunction<T>,
+                         ErrorFunction<T>::transforms_last_layer,
+                         InputSize, LayersInfo...>;
 
 };
 
