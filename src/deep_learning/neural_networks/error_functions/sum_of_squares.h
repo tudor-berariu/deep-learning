@@ -11,11 +11,11 @@ struct SumOfSquares {
   static constexpr bool transforms_last_layer = false;
   static constexpr bool supports_backpropagation = true;
 
-  template<typename LayerSize, size_t batch_size>
+  template<typename LayerSize>
   using Output = std::array<T, LayerSize::length>;
 
   template<typename LayerSize, size_t batch_size>
-  using Outputs = std::array<Output<LayerSize, batch_size>, batch_size>;
+  using Outputs = std::array<Output<LayerSize>, batch_size>;
 
   template<typename LayerSize, size_t batch_size>
   inline static T
@@ -33,9 +33,16 @@ struct SumOfSquares {
   dError(const Outputs<LayerSize, batch_size>& y,
          const Outputs<LayerSize, batch_size>& t,
          Outputs<LayerSize, batch_size>& e) {
-    for (size_t n = 0; n < batch_size; n++)
+    for (size_t n = 0; n < batch_size; n++) {
+      const Output<LayerSize>* const y_row =
+        reinterpret_cast<const Output<LayerSize>*>(y[n].data());
+      const Output<LayerSize>* const t_row =
+        reinterpret_cast<const Output<LayerSize>*>(t[n].data());
+      Output<LayerSize>* const e_row =
+        reinterpret_cast<Output<LayerSize>*>(e[n].data());
       for (size_t i = 0; i < LayerSize::length; i++)
-        e[n][i] = y[n][i] - t[n][i];
+        (*e_row)[i] = (*y_row)[i] - (*t_row)[i];
+    }
   }
 };
 

@@ -25,12 +25,14 @@ struct SoftMax {
     Outputs<LayerSize, batch_size>& y) {
     for (size_t n = 0; n < batch_size; n++) {
       T sum = 0;
+      Output<LayerSize>* const y_row =
+        reinterpret_cast<Output<LayerSize>*>(y[n].data());
       for (size_t i = 0; i < LayerSize::length; i++) {
-        y[n][i] = exp(a[n][i]);
-        sum += y[n][i];
+        (*y_row)[i] = exp(a[n][i]);
+        sum += (*y_row)[i];
       }
       for (size_t i = 0; i < LayerSize::length; i++) {
-        y[n][i] = y[n][i] / sum;
+        (*y_row)[i] = (*y_row)[i] / sum;
       }
     }
   }
@@ -40,9 +42,14 @@ struct SoftMax {
   error(const Outputs<LayerSize, batch_size>& y,
         const Outputs<LayerSize, batch_size>& t) {
     T err = 0;
-    for (size_t n = 0; n < batch_size; n++)
+    for (size_t n = 0; n < batch_size; n++) {
+      const Output<LayerSize>* const y_row =
+        reinterpret_cast<const Output<LayerSize>*>(y[n].data());
+      const Output<LayerSize>* const t_row =
+        reinterpret_cast<const Output<LayerSize>*>(t[n].data());
       for (size_t i = 0; i < LayerSize::length; i++)
-        err += t[n][i] * log(y[n][i]);
+        err += (*t_row)[i] * log((*y_row)[i]);
+    }
     return err;
   }
 
@@ -51,9 +58,16 @@ struct SoftMax {
   dError(const Outputs<LayerSize, batch_size>& y,
          const Outputs<LayerSize, batch_size>& t,
          Outputs<LayerSize, batch_size>& e) {
-    for (size_t n = 0; n < batch_size; n++)
+    for (size_t n = 0; n < batch_size; n++) {
+      const Output<LayerSize>* const y_row =
+        reinterpret_cast<const Output<LayerSize>*>(y[n].data());
+      const Output<LayerSize>* const t_row =
+        reinterpret_cast<const Output<LayerSize>*>(t[n].data());
+      Output<LayerSize>* const e_row =
+        reinterpret_cast<Output<LayerSize>*>(e[n].data());
       for (size_t i = 0; i < LayerSize::length; i++)
-        e[n][i] = y[n][i] - t[n][i];
+        (*e_row)[i] = (*y_row)[i] - (*t_row)[i];
+    }
   }
 };
 
