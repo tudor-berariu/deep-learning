@@ -36,9 +36,8 @@ struct _Parameters<T, InputSize, LastLayer> {
       values[i] = next_parameter(e);
   }
 
-  template<typename _T, typename _InputSize, typename _LastLayer>
   friend std::ostream&
-  operator<<(std::ostream& s, const _Parameters<_T, _InputSize, _LastLayer>&){
+  operator<<(std::ostream& s, const _Parameters<T, InputSize, LastLayer>&){
     s << std::endl;
     return s;
   }
@@ -85,11 +84,9 @@ struct _Parameters<T, InputSize, CrtLayer, Other...> {
       values[i] = next_parameter(e);
   }
 
-  template<typename _T, typename _InputSize, typename _CrtLayer,
-           typename... _Other>
   friend std::ostream&
   operator<<(std::ostream& s,
-             const _Parameters<_T, _InputSize, _CrtLayer, _Other...>& p) {
+             const _Parameters<T, InputSize, CrtLayer, Other...>& p) {
     for (size_t i = 0; i < p.parameters_no; i++) {
       s << p.values[i] << " ";
     }
