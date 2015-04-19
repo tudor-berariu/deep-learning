@@ -3,8 +3,9 @@
 #include <iostream>
 #include <random>
 #include <typeinfo>
+#include <chrono>
 
-#include <fenv.h>
+//#include <fenv.h>
 
 #include "deep_learning/size.h"
 #include "deep_learning/neural_networks.h"
@@ -25,32 +26,59 @@ Arr<T, batch_size, length>* get_dummy_example() {
   return a;
 }
 
-int main() {
-  feenableexcept(FE_INVALID | FE_OVERFLOW);
-  using NN1 = FeedForwardNet<double,
-                             Size<10>,
-                             FullyConnected<1000, Logistic>,
-                             FullyConnected<1000, ReLU>,
-                             FullyConnected<200, HyperbolicTangent>,
-                             FullyConnected<10, Identity>>;
-  using P1 = NN1::Parameters;
-  using FC = NN1::ForwardComputation<1000, RMSE>;
-  using GC = NN1::GradientComputation<1000, SoftMax>;
-
-  std::cout << typeid(NN1::DataType).name() << std::endl;
-  std::cout << typeid(P1).name() << " " << sizeof(P1) << std::endl;
-  std::cout << typeid(FC).name() << std::endl;
+template<size_t batch_size, typename NN>
+void test_performance() {
+  using FC = typename NN::template ForwardComputation<batch_size, RMSE>;
+  using GC = typename NN::template GradientComputation<batch_size, SoftMax>;
+  using P1 = typename NN::Parameters;
 
   FC* fc = new FC;
   GC* gc = new GC;
   P1* p = new P1;
-  //std::cout << "Parameters: " << std::endl << (*p) << std::endl;
   P1* g = new P1;
-  FC::Inputs* x = get_dummy_example<double, 1000, 10>();
-  FC::NetOutputs* t = get_dummy_example<double, 1000, 10>();
-  fc->forward(*x, *p);
-  std::cout << fc->error(*t) << std::endl;
-  std::cout << gc->computeGradient(*x, *p, *t, *g) << std::endl;
+
+  double fw_avg = 0.0;
+  double bw_avg = 0.0;
+  for (size_t t_no = 0; t_no < 10; t_no++) {
+    typename FC::Inputs* x =
+      get_dummy_example<double, batch_size, NN::InputSize::length>();
+    typename FC::NetOutputs* t =
+      get_dummy_example<double, batch_size, NN::OutputSize::length>();
+
+    std::chrono::steady_clock::time_point a = std::chrono::steady_clock::now();
+    fc->forward(*x, *p);
+    double err = fc->error(*t);
+    std::chrono::steady_clock::time_point b = std::chrono::steady_clock::now();
+    double err2 = gc->computeGradient(*x, *p, *t, *g);
+    std::chrono::steady_clock::time_point c = std::chrono::steady_clock::now();
+
+    std::chrono::duration<double> fw_span =
+      std::chrono::duration_cast<std::chrono::duration<double>>(b - a);
+    std::chrono::duration<double> bw_span =
+      std::chrono::duration_cast<std::chrono::duration<double>>(c - b);
+    std::cout << err << " in " << fw_span.count() << " \t and "
+              << err2 << " in " << bw_span.count() << std::endl;
+    fw_avg += fw_span.count();
+    bw_avg += bw_span.count();
+    delete x;
+    delete t;
+  }
   delete fc;
+  delete gc;
+  delete p;
+  delete g;
+  std::cout << "avg forward in " << fw_avg / 10.0 << " \t and "
+            << "avg backprop in " << bw_avg / 10.0 << std::endl;
+}
+
+int main() {
+  //feenableexcept(FE_INVALID | FE_OVERFLOW);
+  using NN = FeedForwardNet<double,
+                            Size<10>,
+                            FullyConnected<1000, Logistic>,
+                            FullyConnected<1000, ReLU>,
+                            FullyConnected<200, HyperbolicTangent>,
+                            FullyConnected<10, Identity>>;
+  test_performance<300, NN>();
   return 0;
 }
