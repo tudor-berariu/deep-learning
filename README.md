@@ -11,7 +11,7 @@ You need to install [ATLAS](http://math-atlas.sourceforge.net/) to have BLAS
 support in Cerebrum.
 
 ```
-make test-atlas
-./test-atlas
+make test_atlas
+./test_atlas
 ```
 

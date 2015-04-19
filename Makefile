@@ -27,15 +27,32 @@ CC := clang #cc
 CCFLAGS := -Wall -std=c++0x
 LIBS := -lm
 LIBSTD := -lstdc++
-LIBMMGTK := #`pkg-config gtkmm-3.0 --cflags --libs`
-LIBBLAS := #`pkg-config atlas --cflags --libs`
-LIB := $(LIBS) $(LIBMMGTK) $(LIBBLAS) $(LIBSTD)
 
-ifeq ($(MAKECMDGOALS),debug)
+LIBGUI :=
+LIBBLAS :=
+
+ifneq ($(filter debug, $(MAKECMDGOALS)),)
 	override CCFLAGS := -g -O0 $(CCFLAGS)
 else
 	override CCFLAGS := -Ofast $(CCFLAGS)
 endif
+
+ifneq ($(filter atlas, $(MAKECMDGOALS)),)
+	override LIBBLAS := `pkg-config atlas --cflags --libs`
+	override CCFLAGS := -DUSE_ATLAS $(CCFLAGS)
+endif
+
+ifneq ($(filter test_atlas, $(MAKECMDGOALS)),)
+	override LIBBLAS := `pkg-config atlas --cflags --libs`
+	override CCFLAGS := -DUSE_ATLAS $(CCFLAGS)
+endif
+
+ifneq ($(filter gtkmm, $(MAKECMDGOALS)),)
+	override LIBGUI := `pkg-config gtkmm-3.0 --cflags --libs`
+endif
+
+
+LIB := $(LIBS) $(LIBGUI) $(LIBBLAS) $(LIBSTD)
 
 C := $(CC) $(CCFLAGS)
 
@@ -48,7 +65,7 @@ SRC_DIR=src
 BUILD_DIR=build
 
 # source files
-MAIN_SRC=$(wildcard $(SRC_DIR)/*.cc)
+MAIN_SRC=$(patsubst $(SRC_DIR)/test_atlas.cc,,$(wildcard $(SRC_DIR)/*.cc))
 AUX_SRC=$(shell find $(SRC_DIR)/*/ -name *.cc 2> /dev/null)
 HEADERS=$(shell find $(SRC_DIR)/*/ -name *.h 2> /dev/null)
 SRC=$(MAIN_SRC) $(AUX_SRC)
@@ -60,14 +77,20 @@ AUX_OBJS=$(patsubst %.cc,%.o,$(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(AUX_SRC)))
 # binaries
 EXEC=$(patsubst $(SRC_DIR)/%,%,$(patsubst %.cc,%,$(MAIN_SRC)))
 
-.PHONY: build debug clean run
+.PHONY: build debug clean run atlas gtkmm
 
 build: $(EXEC)
 
 debug: $(EXEC)
 
+atlas: $(EXEC)
+
 # Link object files
 #  Add the following line to add executable to git ignore.
+
+test_atlas: $(SRC_DIR)/test_atlas.cc
+	$(CC) $(CCFLAGS) -o $@ $+ $(LIB)
+	(cat $(GITIGNORE) | grep -xq $@) || echo "$@" >> $(GITIGNORE)
 
 $(EXEC): %: $(BUILD_DIR)/%.o $(AUX_OBJS)
 	(cat $(GITIGNORE) | grep -xq $@) || echo "$@" >> $(GITIGNORE)
@@ -80,7 +103,7 @@ $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc $(HEADERS)
 
 # Remove all Emacs temporary files, objects and executable
 clean:
-	rm -rf $(EXEC) $(BUILD_DIR)/*
+	rm -rf test_atlas $(EXEC) $(BUILD_DIR)/*
 	find . -name '*~' -print0 | xargs -0 rm -f
 	find . -name '*.swp' -print0 | xargs -0 rm -f
 	find . -name '*.swp' -print0 | xargs -0 rm -f
