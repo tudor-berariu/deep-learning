@@ -136,6 +136,64 @@ struct FullyConnected {
    }
   };
 
+  /* -------------------- Backpropagation phase -------------------- */
+
+  template<typename T, typename InputSize, size_t batch_size>
+  struct _Backpropagate;
+
+  template<typename T, typename InputSize, size_t batch_size>
+  static inline void
+  backpropagate(const Inputs<T, InputSize, batch_size>& inputs,
+                const Parameters<T, InputSize>& parameters,
+                const Hidden<T, InputSize, batch_size>& hidden,
+                const Outputs<T, InputSize, batch_size>& outputs,
+                Outputs<T, InputSize, batch_size>& errors,
+                Parameters<T, InputSize>& gradients,
+                Inputs<T, InputSize, batch_size>& prev_errors) {
+    _Backpropagate<T, InputSize, batch_size>::
+      backpropagate(inputs, parameters, hidden, outputs, errors, gradients,
+                    prev_errors);
+  }
+
+  template<typename T, typename InputSize, size_t batch_size>
+  struct _Backpropagate {
+    inline static void
+    backpropagate(const Inputs<T, InputSize, batch_size>& inputs,
+                  const Parameters<T, InputSize>& parameters,
+                  const Hidden<T, InputSize, batch_size>& hidden,
+                  const Outputs<T, InputSize, batch_size>& outputs,
+                  Outputs<T, InputSize, batch_size>& errors,
+                  Parameters<T, InputSize>& gradients,
+                  Inputs<T, InputSize, batch_size>& prev_errors) {
+      const _Weights<T, InputSize>& weights =
+        *reinterpret_cast<const _Weights<T, InputSize>*>(&(parameters[length]));
+
+      _Biases<T, InputSize>& g_biases =
+        *reinterpret_cast<_Biases<T, InputSize>*>(gradients.data());
+      _Weights<T, InputSize>& g_weights =
+        *reinterpret_cast<_Weights<T, InputSize>*>(&(gradients[length]));
+
+      for (size_t j = 0; j < length; j++)
+        g_biases[j] = (T)0;
+      for (size_t j = 0; j < length; j++)
+        for (size_t i = 0; i < InputSize::length; i++)
+          g_weights[j][i] = (T)0;
+
+      for (size_t n = 0; n < batch_size; n++) {
+        for (size_t j = 0; j < length; j++) {
+          errors[n][j] *= TransferFunction<T>::df(hidden[n][j]);
+          g_biases[j] += errors[n][j];
+          for (size_t i = 0; i < InputSize::length; i++)
+            g_weights[j][i] += inputs[n][i] * errors[n][j];
+        }
+        for (size_t i = 0; i < InputSize::length; i++) {
+          prev_errors[n][i] = (T)0;
+          for (size_t j = 0; j < length; j++)
+            prev_errors[n][i] += errors[n][j] * weights[j][i];
+        }
+      }
+    }
+  };
 };
 
 #endif
