@@ -38,17 +38,18 @@ else
 endif
 
 ifneq ($(filter atlas, $(MAKECMDGOALS)),)
-	override LIBBLAS := `pkg-config atlas --cflags --libs`
-	override CCFLAGS := -DUSE_ATLAS $(CCFLAGS)
+	override LIBBLAS := `pkg-config atlas --libs`
+	override CCFLAGS := -DUSE_ATLAS `pkg-config atlas --cflags` $(CCFLAGS)
 endif
 
 ifneq ($(filter test_atlas, $(MAKECMDGOALS)),)
-	override LIBBLAS := `pkg-config atlas --cflags --libs`
-	override CCFLAGS := -DUSE_ATLAS $(CCFLAGS)
+	override LIBBLAS := `pkg-config atlas --libs`
+	override CCFLAGS := -DUSE_ATLAS `pkg-config atlas --cflags` $(CCFLAGS)
 endif
 
 ifneq ($(filter gtkmm, $(MAKECMDGOALS)),)
-	override LIBGUI := `pkg-config gtkmm-3.0 --cflags --libs`
+	override LIBGUI := `pkg-config gtkmm-3.0 --libs`
+	override CCFLAGS := -DUSE_GTKMM `pkg-config gtkmm-3.0 --cflags` $(CCFLAGS)
 endif
 
 

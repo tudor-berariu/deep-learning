@@ -3,6 +3,12 @@
 #ifndef FULLY_CONNECTED_H
 #define FULLY_CONNECTED_H
 
+#ifdef USE_ATLAS
+extern "C" {
+#include <cblas.h>
+}
+#endif
+
 #include <cstddef>
 #include <array>
 #include <random>
@@ -98,6 +104,71 @@ struct FullyConnected {
       forward(inputs, parameters, hidden, outputs);
   }
 
+
+#ifdef USE_ATLAS
+
+  template<typename InputSize, size_t batch_size, bool train>
+  struct _Forward<float, InputSize, batch_size, train> {
+    static void forward(const Inputs<float, InputSize, batch_size>& inputs,
+                        const Parameters<float, InputSize>& parameters,
+                        Hidden<float, InputSize, batch_size>& hidden,
+                        Outputs<float, InputSize, batch_size>& outputs) {
+      for (size_t n = 0; n < batch_size; n++) {
+        cblas_scopy(length,
+                    reinterpret_cast<const float*>(parameters.data()), 1,
+                    reinterpret_cast<float*>(hidden[n].data()), 1);
+      }
+      cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                  batch_size, length, InputSize::length,
+                  1.0, reinterpret_cast<const float*>(inputs.data()),
+                  InputSize::length,
+                  reinterpret_cast<const float*>(&(parameters[length])),
+                  InputSize::length,
+                  1.0, reinterpret_cast<float*>(hidden.data()), length);
+      for (size_t n = 0; n < batch_size; n++) {
+        Output<float, InputSize>* const output_row =
+          reinterpret_cast<Output<float, InputSize>*>(outputs[n].data());
+        Output<float, InputSize>* const hidden_row =
+          reinterpret_cast<Output<float, InputSize>*>(hidden[n].data());
+        for (size_t j = 0; j < length; j++) {
+          (*output_row)[j] = TransferFunction<float>::f((*hidden_row)[j]);
+        }
+      }
+    }
+  };
+
+  template<typename InputSize, size_t batch_size, bool train>
+  struct _Forward<double, InputSize, batch_size, train> {
+    inline static void
+    forward(const Inputs<double, InputSize, batch_size>& inputs,
+            const Parameters<double, InputSize>& parameters,
+            Hidden<double, InputSize, batch_size>& hidden,
+            Outputs<double, InputSize, batch_size>& outputs){
+      for (size_t n = 0; n < batch_size; n++) {
+        cblas_dcopy(length,
+                    reinterpret_cast<const double*>(parameters.data()), 1,
+                    reinterpret_cast<double*>(hidden[n].data()), 1);
+      }
+      cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+                  batch_size, length, InputSize::length,
+                  1.0, reinterpret_cast<const double*>(inputs.data()),
+                  InputSize::length,
+                  reinterpret_cast<const double*>(&(parameters[length])),
+                  InputSize::length,
+                  1.0, reinterpret_cast<double*>(hidden.data()), length);
+      for (size_t n = 0; n < batch_size; n++) {
+        Output<double, InputSize>* const output_row =
+          reinterpret_cast<Output<double, InputSize>*>(outputs[n].data());
+        Output<double, InputSize>* const hidden_row =
+          reinterpret_cast<Output<double, InputSize>*>(hidden[n].data());
+        for (size_t j = 0; j < length; j++) {
+          (*output_row)[j] = TransferFunction<double>::f((*hidden_row)[j]);
+        }
+      }
+    }
+  };
+#endif
+
   template<typename T, typename InputSize, size_t batch_size, bool train>
   struct _Forward {
     inline static void
@@ -112,22 +183,22 @@ struct FullyConnected {
         reinterpret_cast<const _Weights<T, InputSize>*>(&(parameters[length]));
 
       for (size_t n = 0; n < batch_size; n++) {
-        const Input<T, InputSize>* const inputRow =
+        const Input<T, InputSize>* const input_row =
           reinterpret_cast<const Input<T, InputSize>*>(inputs[n].data());
-        Output<T, InputSize>* const hiddenRow =
+        Output<T, InputSize>* const hidden_row =
           reinterpret_cast<Output<T, InputSize>*>(hidden[n].data());
-        Output<T, InputSize>* const outputRow =
+        Output<T, InputSize>* const output_row =
           reinterpret_cast<Output<T, InputSize>*>(outputs[n].data());
         for (size_t j = 0; j < length; j++) {
           using _WR = _WeightsRow<T, InputSize>;
-          const _WR* const weightsRow =
+          const _WR* const weights_row =
             reinterpret_cast<const _WR*>((*weights)[j].data());
 
-          (*hiddenRow)[j] = (*biases)[j];
+          (*hidden_row)[j] = (*biases)[j];
           for (size_t i = 0; i < InputSize::length; i++) {
-            (*hiddenRow)[j] += (*inputRow)[i] * (*weightsRow)[i];
+            (*hidden_row)[j] += (*input_row)[i] * (*weights_row)[i];
           }
-          (*outputRow)[j] = TransferFunction<T>::f((*hiddenRow)[j]);
+          (*output_row)[j] = TransferFunction<T>::f((*hidden_row)[j]);
         }
       }
     }
