@@ -1,6 +1,6 @@
 // Copyright (C) 2015 Tudor Berariu <tudor.berariu@gmail.com>
 
-#ifdef USE_ATLAS
+#ifdef USE_CBLAS
 extern "C" {
   #include <cblas.h>
 }

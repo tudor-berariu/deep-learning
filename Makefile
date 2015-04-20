@@ -30,6 +30,8 @@ LIBSTD := -lstdc++
 
 LIBGUI :=
 LIBBLAS :=
+CCFLAGS_GUI :=
+CCFLAGS_BLAS :=
 
 ifneq ($(filter debug, $(MAKECMDGOALS)),)
 	override CCFLAGS := -g -O0 $(CCFLAGS)
@@ -37,36 +39,40 @@ else
 	override CCFLAGS := -Ofast $(CCFLAGS)
 endif
 
-ifneq ($(filter atlas, $(MAKECMDGOALS)),)
-	override LIBBLAS := `pkg-config atlas --libs`
-	override CCFLAGS := -DUSE_ATLAS `pkg-config atlas --cflags` $(CCFLAGS)
+ifneq ($(filter test_cblas, $(MAKECMDGOALS)),)
+	override LIBBLAS := `cat cblas.libs`
+	override CCFLAGS_BLAS := -DUSE_CBLAS `cat cblas.cflags`
 endif
 
-ifneq ($(filter test_atlas, $(MAKECMDGOALS)),)
+ifneq ($(filter cblas, $(MAKECMDGOALS)),)
+	override LIBBLAS := `cat cblas.libs`
+	override CCFLAGS_BLAS := -DUSE_CBLAS `cat cblas.cflags`
+endif
+
+ifneq ($(filter atlas, $(MAKECMDGOALS)),)
 	override LIBBLAS := `pkg-config atlas --libs`
-	override CCFLAGS := -DUSE_ATLAS `pkg-config atlas --cflags` $(CCFLAGS)
+	override CCFLAGS_BLAS := -DUSE_CBLAS `pkg-config atlas --cflags`
 endif
 
 ifneq ($(filter gtkmm, $(MAKECMDGOALS)),)
 	override LIBGUI := `pkg-config gtkmm-3.0 --libs`
-	override CCFLAGS := -DUSE_GTKMM `pkg-config gtkmm-3.0 --cflags` $(CCFLAGS)
+	override CCFLAGS_GUI := -DUSE_GTKMM `pkg-config gtkmm-3.0 --cflags`
 endif
 
 
 LIB := $(LIBS) $(LIBGUI) $(LIBBLAS) $(LIBSTD)
 
-C := $(CC) $(CCFLAGS)
+C := $(CC) $(CCFLAGS) $(CCFLAGS_BLAS) $(CCFLAGS_GUI)
 
 # git
 GITIGNORE=.gitignore
-
 
 # sources and objects folders
 SRC_DIR=src
 BUILD_DIR=build
 
 # source files
-MAIN_SRC=$(patsubst $(SRC_DIR)/test_atlas.cc,,$(wildcard $(SRC_DIR)/*.cc))
+MAIN_SRC=$(patsubst $(SRC_DIR)/test_cblas.cc,,$(wildcard $(SRC_DIR)/*.cc))
 AUX_SRC=$(shell find $(SRC_DIR)/*/ -name *.cc 2> /dev/null)
 HEADERS=$(shell find $(SRC_DIR)/*/ -name *.h 2> /dev/null)
 SRC=$(MAIN_SRC) $(AUX_SRC)
@@ -78,33 +84,46 @@ AUX_OBJS=$(patsubst %.cc,%.o,$(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(AUX_SRC)))
 # binaries
 EXEC=$(patsubst $(SRC_DIR)/%,%,$(patsubst %.cc,%,$(MAIN_SRC)))
 
-.PHONY: build debug clean run atlas gtkmm
+.PHONY: build debug clean run cblas atlas gtkmm
+
+MODIFIERS=cblas atlas
+REAL_GOALS=$(strip $(filter-out $(MODIFIERS),$(MAKECMDGOALS)))
+
+ifeq "$(REAL_GOALS)" ""
+atlas: build
+	@echo "Compiled with ATLAS"
+cblas: build
+	@echo "Compiled with BLAS"
+else
+atlas:
+	@echo "Using ATLAS"
+cblas:
+	@echo "Using BLAS"
+endif
 
 build: $(EXEC)
 
 debug: $(EXEC)
 
-atlas: $(EXEC)
-
 # Link object files
-#  Add the following line to add executable to git ignore.
+#  Add the following line to add executable to .gitignore.
 
-test_atlas: $(SRC_DIR)/test_atlas.cc
-	$(CC) $(CCFLAGS) -o $@ $+ $(LIB)
+test_cblas: $(SRC_DIR)/test_cblas.cc
+	$(C) -o $@ $+ $(LIB)
 	(cat $(GITIGNORE) | grep -xq $@) || echo "$@" >> $(GITIGNORE)
 
 $(EXEC): %: $(BUILD_DIR)/%.o $(AUX_OBJS)
 	(cat $(GITIGNORE) | grep -xq $@) || echo "$@" >> $(GITIGNORE)
-	$(CC) $(CCFLAGS) -o $@ $+ $(LIB)
+	$(C) -o $@ $+ $(LIB)
 
 # Build object files from sources
 $(OBJS): $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cc $(HEADERS)
 	mkdir -p $(patsubst %/$(lastword $(subst /, ,$@)),%,$@)
-	$(CC) $(CCFLAGS) -I$(SRC_DIR) -c $(word 1,$+) -o $@
+	$(C) -I$(SRC_DIR) -c $(word 1,$+) -o $@
 
 # Remove all Emacs temporary files, objects and executable
 clean:
-	rm -rf test_atlas $(EXEC) $(BUILD_DIR)/*
+	rm -rf test_cblas $(EXEC) $(BUILD_DIR)/*
 	find . -name '*~' -print0 | xargs -0 rm -f
 	find . -name '*.swp' -print0 | xargs -0 rm -f
 	find . -name '*.swp' -print0 | xargs -0 rm -f

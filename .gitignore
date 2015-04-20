@@ -32,6 +32,11 @@
 *.swo
 .ycm_extra_conf.py*
 
+# cblas info files
+cblas.cflags
+cblas.libs
+
 # Executables are added automatically from Makefile under this line
 feed_forward_test
 test_atlas
+test_cblas
