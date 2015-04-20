@@ -73,9 +73,6 @@ void test_performance() {
 
 int main() {
   //feenableexcept(FE_INVALID | FE_OVERFLOW);
-#ifdef USE_ATLAS
-  std::cout << "Using ATLAS..." << std::endl;
-#endif
   using NN = FeedForwardNet<double,
                             Size<10>,
                             FullyConnected<1000, Logistic>,

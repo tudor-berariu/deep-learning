@@ -3,11 +3,7 @@
 #ifndef NEURAL_NETWORKS
 #define NEURAL_NETWORKS
 
-#ifdef USE_ATLAS
-extern "C" {
-#include <cblas.h>
-}
-#endif
+#include "deep_learning/include_cblas.h"
 
 #include "deep_learning/neural_networks/feed_forward_net.h"
 

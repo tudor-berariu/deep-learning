@@ -3,16 +3,11 @@
 #ifndef FULLY_CONNECTED_H
 #define FULLY_CONNECTED_H
 
-#ifdef USE_ATLAS
-extern "C" {
-#include <cblas.h>
-}
-#endif
-
 #include <cstddef>
 #include <array>
 #include <random>
 
+#include "deep_learning/include_cblas.h"
 #include "deep_learning/size.h"
 
 template<size_t length, template <typename> class TransferFunction>
@@ -105,7 +100,7 @@ struct FullyConnected {
   }
 
 
-#ifdef USE_ATLAS
+#ifdef USE_CBLAS
 
   template<typename InputSize, size_t batch_size, bool train>
   struct _Forward<float, InputSize, batch_size, train> {
@@ -222,6 +217,36 @@ struct FullyConnected {
       backpropagate(inputs, parameters, hidden, outputs, errors, gradients,
                     prev_errors);
   }
+
+#ifdef USE_CBLAS
+
+  template<typename InputSize, size_t batch_size>
+  struct _Backpropagate<float, InputSize, batch_size> {
+    inline static void
+    backpropagate(const Inputs<float, InputSize, batch_size>& inputs,
+                  const Parameters<float, InputSize>& parameters,
+                  const Hidden<float, InputSize, batch_size>& hidden,
+                  const Outputs<float, InputSize, batch_size>&,
+                  Outputs<float, InputSize, batch_size>& errors,
+                  Parameters<float, InputSize>& gradients,
+                  Inputs<float, InputSize, batch_size>& prev_errors) {
+    }
+  };
+
+  template<typename InputSize, size_t batch_size>
+  struct _Backpropagate<double, InputSize, batch_size> {
+    inline static void
+    backpropagate(const Inputs<double, InputSize, batch_size>& inputs,
+                  const Parameters<double, InputSize>& parameters,
+                  const Hidden<double, InputSize, batch_size>& hidden,
+                  const Outputs<double, InputSize, batch_size>&,
+                  Outputs<double, InputSize, batch_size>& errors,
+                  Parameters<double, InputSize>& gradients,
+                  Inputs<double, InputSize, batch_size>& prev_errors) {
+    }
+  };
+
+#endif
 
   template<typename T, typename InputSize, size_t batch_size>
   struct _Backpropagate {
