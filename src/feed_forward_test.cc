@@ -76,6 +76,7 @@ int main() {
   using NN = FeedForwardNet<double,
                             Size<10>,
                             FullyConnected<1000, Logistic>,
+                            MaxPooling<1, 1>,
                             FullyConnected<1000, ReLU>,
                             Dropout<500>,
                             FullyConnected<2000, HyperbolicTangent>,
