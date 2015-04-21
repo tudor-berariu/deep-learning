@@ -89,6 +89,10 @@ EXEC=$(patsubst $(SRC_DIR)/%,%,$(patsubst %.cc,%,$(MAIN_SRC)))
 MODIFIERS=cblas atlas
 REAL_GOALS=$(strip $(filter-out $(MODIFIERS),$(MAKECMDGOALS)))
 
+build: $(EXEC)
+
+debug: $(EXEC)
+
 ifeq "$(REAL_GOALS)" ""
 atlas: build
 	@echo "Compiled with ATLAS"
@@ -100,10 +104,6 @@ atlas:
 cblas:
 	@echo "Using BLAS"
 endif
-
-build: $(EXEC)
-
-debug: $(EXEC)
 
 # Link object files
 #  Add the following line to add executable to .gitignore.
