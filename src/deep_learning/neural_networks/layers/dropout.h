@@ -40,16 +40,6 @@ struct Dropout {
   template<typename T, typename InputSize>
   using Parameters = std::array<T, 0>;
 
- private:
-
-  template<typename T, typename InputSize, size_t batch_size>
-  using _LinearInputs = std::array<T, InputSize::length * batch_size>;
-
-  template<typename T, typename InputSize, size_t batch_size>
-  using _LinearOutputs = _LinearInputs<T, InputSize, batch_size>;
-
- public:
-
   template<typename T, typename InputSize>
   inline static void
   init_parameters(Parameters<T, InputSize>&) { }
@@ -72,10 +62,22 @@ struct Dropout {
   template<typename T, typename InputSize, size_t batch_size>
   using Hidden = Output<T, InputSize>;
 
+ private:
+
+  template<typename T, typename InputSize, size_t batch_size>
+  using _LinearInputs = std::array<T, InputSize::length * batch_size>;
+
+  template<typename T, typename InputSize, size_t batch_size>
+  using _LinearOutputs = _LinearInputs<T, InputSize, batch_size>;
+
   /* -------------------- Forward phase -------------------- */
+
+ private:
 
   template<typename T, typename InputSize, size_t batch_size, bool train>
   struct _Forward;
+
+ public:
 
   template<typename T, typename InputSize, size_t batch_size, bool train>
   inline static void
@@ -87,6 +89,7 @@ struct Dropout {
       forward(inputs, parameters, hidden, outputs);
   }
 
+ private:
 
 #ifdef USE_CBLAS
 /*
@@ -130,8 +133,12 @@ struct Dropout {
 
   /* -------------------- Backpropagation phase -------------------- */
 
+ private:
+
   template<typename T, typename InputSize, size_t batch_size>
   struct _Backpropagate;
+
+ public:
 
   template<typename T, typename InputSize, size_t batch_size>
   static inline void
@@ -146,6 +153,8 @@ struct Dropout {
       backpropagate(inputs, parameters, hidden, outputs, errors, gradients,
                     prev_errors);
   }
+
+ private:
 
 #ifdef USE_CBLAS
   /* Tudor:
