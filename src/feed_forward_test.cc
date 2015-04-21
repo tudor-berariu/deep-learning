@@ -77,6 +77,7 @@ int main() {
                             Size<10>,
                             FullyConnected<1000, Logistic>,
                             FullyConnected<1000, ReLU>,
+                            Dropout<500>,
                             FullyConnected<2000, HyperbolicTangent>,
                             FullyConnected<100, Identity>>;
   test_performance<300, NN>();
