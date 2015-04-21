@@ -89,24 +89,11 @@ struct Dropout {
 
 
 #ifdef USE_CBLAS
-
-  template<typename InputSize, size_t batch_size, bool train>
-  struct _Forward<float, InputSize, batch_size, train> {
-    static void forward(const Inputs<float, InputSize, batch_size>& inputs,
-                        const Parameters<float, InputSize>& parameters,
-                        Hidden<float, InputSize, batch_size>& hidden,
-                        Outputs<float, InputSize, batch_size>& outputs) {
-  };
-
-  template<typename InputSize, size_t batch_size, bool train>
-  struct _Forward<double, InputSize, batch_size, train> {
-    inline static void
-    forward(const Inputs<double, InputSize, batch_size>& inputs,
-            const Parameters<double, InputSize>& parameters,
-            Hidden<double, InputSize, batch_size>& hidden,
-            Outputs<double, InputSize, batch_size>& outputs){
-    }
-  };
+/*
+ * Tudor
+ * No cblas optimization yet as there is no element wise multiplication
+ * routine. Using a diagonal matrix made things worse.
+ */
 #endif
 
   template<typename T, typename InputSize, size_t batch_size, bool train>
@@ -116,28 +103,28 @@ struct Dropout {
             const Parameters<T, InputSize>&,
             Hidden<T, InputSize, batch_size>& hidden,
             Outputs<T, InputSize, batch_size>& outputs) {
-    if (train) {
-      constexpr double p = (double)active_no / (double)(InputSize::length);
-      std::random_device rd { };
-      std::default_random_engine e {rd()};
-      std::bernoulli_distribution take(p);
+      if (train) {
+        constexpr double p = (double)active_no / (double)(InputSize::length);
+        std::random_device rd { };
+        std::default_random_engine e {rd()};
+        std::bernoulli_distribution take(p);
 
-      using InputRow = Input<T, InputSize>;
-      using OutputRow = Output<T, InputSize>;
+        using InputRow = Input<T, InputSize>;
+        using OutputRow = Output<T, InputSize>;
 
-      for (size_t i = 0; i < InputSize::length; i++)
-        hidden[i] = (T)take(e);
-      for (size_t n = 0; n < batch_size; n++) {
-        const InputRow& input_row =
-          *reinterpret_cast<const InputRow*>(inputs[n].data());
-        OutputRow& output_row =
-          *reinterpret_cast<OutputRow*>(outputs[n].data());
         for (size_t i = 0; i < InputSize::length; i++)
-          output_row[i] = hidden[i] * input_row[i];
+          hidden[i] = (T)take(e);
+        for (size_t n = 0; n < batch_size; n++) {
+          const InputRow& input_row =
+            *reinterpret_cast<const InputRow*>(inputs[n].data());
+          OutputRow& output_row =
+            *reinterpret_cast<OutputRow*>(outputs[n].data());
+          for (size_t i = 0; i < InputSize::length; i++)
+            output_row[i] = hidden[i] * input_row[i];
+        }
+      } else {
+        std::memcpy(outputs.data(), inputs.data(), sizeof(outputs));
       }
-    } else {
-      std::memcpy(outputs.data(), inputs.data(), sizeof(outputs));
-    }
     }
   };
 
@@ -161,33 +148,9 @@ struct Dropout {
   }
 
 #ifdef USE_CBLAS
-
-  template<typename InputSize, size_t batch_size>
-  struct _Backpropagate<float, InputSize, batch_size> {
-    inline static void
-    backpropagate(const Inputs<float, InputSize, batch_size>& inputs,
-                  const Parameters<float, InputSize>& parameters,
-                  const Hidden<float, InputSize, batch_size>& hidden,
-                  const Outputs<float, InputSize, batch_size>& outputs,
-                  Outputs<float, InputSize, batch_size>& errors,
-                  Parameters<float, InputSize>& gradients,
-                  Inputs<float, InputSize, batch_size>& prev_errors) {
-    }
-  };
-
-  template<typename InputSize, size_t batch_size>
-  struct _Backpropagate<double, InputSize, batch_size> {
-    inline static void
-    backpropagate(const Inputs<double, InputSize, batch_size>& inputs,
-                  const Parameters<double, InputSize>& parameters,
-                  const Hidden<double, InputSize, batch_size>& hidden,
-                  const Outputs<double, InputSize, batch_size>& outputs,
-                  Outputs<double, InputSize, batch_size>& errors,
-                  Parameters<double, InputSize>& gradients,
-                  Inputs<double, InputSize, batch_size>& prev_errors) {
-    }
-  };
-
+  /* Tudor:
+   * Nothing good here yet
+   */
 #endif
 
   template<typename T, typename InputSize, size_t batch_size>
