@@ -7,7 +7,7 @@
 #include <limits>
 #include <array>
 
-#include "deep_learning/size.h"
+#include "cerebrum/size.h"
 
 template<size_t pool_height, size_t pool_width>
 struct MaxPooling {

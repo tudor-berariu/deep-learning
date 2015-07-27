@@ -4,7 +4,7 @@
 #define GRADIENT_COMPUTATION_H
 
 #include <array>
-#include "deep_learning/neural_networks/parameters.h"
+#include "cerebrum/neural_networks/parameters.h"
 
 template<typename T, size_t batch_size, typename ErrorFunction, bool computes,
          typename InputSize, typename... OtherLayers>

@@ -7,7 +7,7 @@
 #include <array>
 #include <type_traits>
 
-#include "deep_learning/neural_networks/parameters.h"
+#include "cerebrum/neural_networks/parameters.h"
 
 template<typename T, size_t batch_size,
          typename ErrorFunction, bool computes,

@@ -3,9 +3,9 @@
 #ifndef FEED_FORWARD_NET_H
 #define FEED_FORWARD_NET_H
 
-#include "deep_learning/neural_networks/parameters.h"
-#include "deep_learning/neural_networks/forward_computation.h"
-#include "deep_learning/neural_networks/gradient_computation.h"
+#include "cerebrum/neural_networks/parameters.h"
+#include "cerebrum/neural_networks/forward_computation.h"
+#include "cerebrum/neural_networks/gradient_computation.h"
 
 template<typename... info>
 struct NetOutput;

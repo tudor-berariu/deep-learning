@@ -7,8 +7,8 @@
 
 //#include <fenv.h>
 
-#include "deep_learning/size.h"
-#include "deep_learning/neural_networks.h"
+#include "cerebrum/size.h"
+#include "cerebrum/neural_networks.h"
 
 template<typename T, size_t batch_size, size_t length>
 using Arr = std::array<std::array<T, length>, batch_size>;

@@ -7,9 +7,9 @@
 #include <array>
 #include <random>
 
-#include "deep_learning/include_cblas.h"
-#include "deep_learning/size.h"
-#include "deep_learning/meta/meta_matrix.h"
+#include "cerebrum/include_cblas.h"
+#include "cerebrum/size.h"
+#include "cerebrum/meta/meta_matrix.h"
 
 template<size_t maps_no, size_t conv_height, size_t conv_width, size_t stride,
          typename Mapping, template<typename> class TransferFunction>

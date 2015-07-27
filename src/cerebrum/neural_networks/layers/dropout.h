@@ -8,8 +8,8 @@
 #include <array>
 #include <random>
 
-#include "deep_learning/include_cblas.h"
-#include "deep_learning/size.h"
+#include "cerebrum/include_cblas.h"
+#include "cerebrum/size.h"
 
 template<size_t active_no>
 struct Dropout { 
